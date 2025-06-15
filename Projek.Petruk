@@ -335,29 +335,151 @@ const int MENU_LOGIN = -1, MENU_UTAMA = 0, MENU_PENDUDUK = 1, MENU_FASILITAS = 2
 
 class MenuSystem {
 private:
-    
+    int currentMenu, selectedItem; Desa* desa;
+    int m_frameX_offset, m_frameY_offset, m_contentDisplayWidth, m_contentDisplayHeight;
+    bool adminSudahLogin; string inputUsername_login, inputPassword_login; int percobaanLogin;
+    const int MAKS_PERCOBAAN_LOGIN = 3;
+
+    void Mgotoxy(int innerX, int innerY) { gotoxy(m_frameX_offset + 1 + innerX, m_frameY_offset + 1 + innerY); }
+    void clearContentArea() { for (int y = 0; y < m_contentDisplayHeight; ++y) { Mgotoxy(0, y); cout << string(m_contentDisplayWidth, ' '); } }
+    void drawOuterFrame() {
+        setColor(WHITE);
+        for (int i = 0; i < m_contentDisplayWidth + 2; ++i) { gotoxy(m_frameX_offset + i, m_frameY_offset); cout << "-"; gotoxy(m_frameX_offset + i, m_frameY_offset + m_contentDisplayHeight + 1); cout << "-"; }
+        for (int i = 0; i < m_contentDisplayHeight + 2; ++i) { gotoxy(m_frameX_offset, m_frameY_offset + i); cout << "|"; gotoxy(m_frameX_offset + m_contentDisplayWidth + 1, m_frameY_offset + i); cout << "|"; }
+        gotoxy(m_frameX_offset, m_frameY_offset); cout << "+"; gotoxy(m_frameX_offset + m_contentDisplayWidth + 1, m_frameY_offset); cout << "+";
+        gotoxy(m_frameX_offset, m_frameY_offset + m_contentDisplayHeight + 1); cout << "+"; gotoxy(m_frameX_offset + m_contentDisplayWidth + 1, m_frameY_offset + m_contentDisplayHeight + 1); cout << "+";
+        setColor(WHITE);
     }
     void drawHeader() {
-       
+        setColor(CYAN); string title = "SISTEM MANAJEMEN DATA DESA"; int titleX = (m_contentDisplayWidth - title.length()) / 2; if (titleX < 0) titleX = 0;
+        Mgotoxy(0, 0); cout << "+" << string(m_contentDisplayWidth - 2, '-') << "+";
+        Mgotoxy(0, 1); cout << "|"; Mgotoxy(m_contentDisplayWidth - 1, 1); cout << "|";
+        Mgotoxy(titleX, 1); cout << title;
+        Mgotoxy(0, 2); cout << "+" << string(m_contentDisplayWidth - 2, '-') << "+"; setColor(WHITE);
     }
 
     void drawMenuLogin(const string& pesanError = "") {
-       
+        clearContentArea(); drawHeader();
+        string title = "--- LOGIN ADMIN ---"; Mgotoxy((m_contentDisplayWidth - title.length()) / 2, 5); cout << title;
+        Mgotoxy(10, 8); cout << "Username : "; Mgotoxy(10 + 11, 8); cout << inputUsername_login << string(25 - inputUsername_login.length(), ' ');
+        Mgotoxy(10, 9); cout << "Password : "; Mgotoxy(10 + 11, 9); for (size_t i = 0; i < inputPassword_login.length(); ++i) cout << "*"; cout << string(25 - inputPassword_login.length(), ' ');
+        if (!pesanError.empty()) { Mgotoxy((m_contentDisplayWidth - pesanError.length()) / 2, 12); setColor(RED); cout << pesanError; setColor(WHITE); }
+        Mgotoxy(5, 14); cout << "Gunakan TAB untuk pindah field, ENTER login, ESC keluar program.";
     }
 
     bool prosesLayarLogin() {
-      
+        int fokusField = 0; char ch; string pesanErrorLogin = ""; inputUsername_login = ""; inputPassword_login = ""; percobaanLogin = 0;
+        while (true) {
+            drawMenuLogin(pesanErrorLogin); pesanErrorLogin = "";
+            if (fokusField == 0) gotoxy(m_frameX_offset + 1 + 10 + 11 + inputUsername_login.length(), m_frameY_offset + 1 + 8);
+            else gotoxy(m_frameX_offset + 1 + 10 + 11 + inputPassword_login.length(), m_frameY_offset + 1 + 9);
+            ch = _getch();
+            if (ch == 13) {
+                if (inputUsername_login == ADMIN_USERNAME && inputPassword_login == ADMIN_PASSWORD) { adminSudahLogin = true; currentMenu = MENU_UTAMA; selectedItem = 0; return true; }
+                else {
+                    percobaanLogin++; inputUsername_login = ""; inputPassword_login = ""; fokusField = 0;
+                    if (percobaanLogin >= MAKS_PERCOBAAN_LOGIN) { pesanErrorLogin = "Batas percobaan login tercapai. Program akan keluar."; drawMenuLogin(pesanErrorLogin); _getch(); gotoxy(0, m_frameY_offset + m_contentDisplayHeight + 2); exit(0); }
+                    pesanErrorLogin = "Username atau Password salah! (" + to_string(percobaanLogin) + "/" + to_string(MAKS_PERCOBAAN_LOGIN) + ")";
+                }
+            } else if (ch == 9) fokusField = 1 - fokusField;
+            else if (ch == 27) { clearScreen(); drawOuterFrame(); clearContentArea(); drawHeader(); setColor(GREEN); string msg = "Keluar dari program."; Mgotoxy((m_contentDisplayWidth - msg.length()) / 2, m_contentDisplayHeight / 2 -1); cout << msg; setColor(WHITE); gotoxy(0, m_frameY_offset + m_contentDisplayHeight + 2); exit(0); }
+            else if (ch == 8) { if (fokusField == 0 && !inputUsername_login.empty()) inputUsername_login.pop_back(); else if (fokusField == 1 && !inputPassword_login.empty()) inputPassword_login.pop_back(); }
+            else if (isprint(ch)) { if (fokusField == 0 && inputUsername_login.length() < 20) inputUsername_login += ch; else if (fokusField == 1 && inputPassword_login.length() < 20) inputPassword_login += ch; }
+        }
     }
 
     void drawMenu(const vector<string>& menuItems, const string& menuTitle, bool showCount = false, size_t count = 0) {
-        
+        clearContentArea(); drawHeader();
+        int currentY = 4; setColor(GREEN); int titleX = (m_contentDisplayWidth - menuTitle.length()) / 2;
+        Mgotoxy(titleX, currentY++); cout << menuTitle; currentY++; setColor(WHITE);
+        if (showCount) {
+            setColor(YELLOW);
+            string countLabel;
+            if (menuTitle.find("PENDUDUK") != string::npos) countLabel = "Penduduk";
+            else if (menuTitle.find("FASILITAS") != string::npos) countLabel = "Fasilitas";
+            else if (menuTitle.find("BANTUAN") != string::npos) countLabel = "Permintaan";
+            Mgotoxy(2, currentY++); cout << "Total " << countLabel << ": " << count; currentY++; setColor(WHITE);
+        }
+        for (size_t i = 0; i < menuItems.size(); i++) { Mgotoxy(2, currentY + i); (i == selectedItem) ? (setColor(YELLOW), cout << "=> " << menuItems[i]) : (cout << "   " << menuItems[i]); setColor(WHITE); }
+        currentY += menuItems.size() + 2;
+        setColor(CYAN); Mgotoxy(2, currentY); cout << "Gunakan Panah Atas/Bawah navigasi, ENTER pilih, ESC kembali"; setColor(WHITE);
     }
-    void waitForKey() {  }
+    void waitForKey() { setColor(CYAN); Mgotoxy(2, m_contentDisplayHeight - 1); cout << "Tekan sembarang tombol untuk melanjutkan..." << string(m_contentDisplayWidth - 42, ' '); setColor(WHITE); _getch(); }
 
 public:
     MenuSystem(Desa* d) : desa(d), currentMenu(MENU_LOGIN), selectedItem(0), adminSudahLogin(false), percobaanLogin(0), m_frameX_offset(0), m_frameY_offset(0), m_contentDisplayWidth(78), m_contentDisplayHeight(23) {}
     void run() {
+          int key; CONSOLE_SCREEN_BUFFER_INFO csbi; int screenWidth, screenHeight;
+        clearScreen(); GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        screenWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1; screenHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+        m_frameX_offset = (screenWidth - (m_contentDisplayWidth + 2)) / 2; m_frameY_offset = (screenHeight - (m_contentDisplayHeight + 2)) / 2;
+        if (m_frameX_offset < 0) m_frameX_offset = 0; if (m_frameY_offset < 0) m_frameY_offset = 0;
+
+        drawOuterFrame(); clearContentArea(); drawHeader();
+        string welcomeMsg1 = "Selamat datang di Sistem Manajemen Data Desa.";
+        string welcomeMsg2 = "Tekan tombol apa saja untuk melanjutkan ke layar login...";
+        Mgotoxy((m_contentDisplayWidth - welcomeMsg1.length())/2, 8); cout << welcomeMsg1;
+        Mgotoxy((m_contentDisplayWidth - welcomeMsg2.length())/2, 10); cout << welcomeMsg2; _getch();
         
+    while (true) {
+            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+            screenWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1; screenHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+            m_frameX_offset = (screenWidth - (m_contentDisplayWidth + 2)) / 2; m_frameY_offset = (screenHeight - (m_contentDisplayHeight + 2)) / 2;
+            if (m_frameX_offset < 0) m_frameX_offset = 0; if (m_frameY_offset < 0) m_frameY_offset = 0;
+
+            drawOuterFrame();
+            if (!adminSudahLogin) { if (!prosesLayarLogin()){ return; } }
+
+            if(adminSudahLogin){
+                switch (currentMenu) {
+                    case MENU_UTAMA: drawMenu({"1. Manajemen Penduduk", "2. Manajemen Fasilitas Desa", "3. Manajemen Permintaan Bantuan", "4. Keluar Program"}, "--- MENU UTAMA ---"); break; // Tambah menu
+                    case MENU_PENDUDUK: drawMenu({"1. Tambah Penduduk", "2. Tampilkan Semua Penduduk", "3. Cari Penduduk (NIK)", "4. Hapus Penduduk", "5. Urutkan Berdasarkan Nama", "6. Urutkan Berdasarkan NIK (D&C)", "7. Kembali ke Menu Utama"}, "--- MENU PENDUDUK ---", true, desa->getJumlahPenduduk()); break;
+                    case MENU_FASILITAS: drawMenu({"1. Tambah Fasilitas", "2. Tampilkan Semua Fasilitas", "3. Cari Fasilitas", "4. Hapus Fasilitas", "5. Kembali ke Menu Utama"}, "--- MENU FASILITAS DESA ---", true, desa->getJumlahFasilitas()); break;
+                    case MENU_BANTUAN: drawMenu({"1. Tambah Permintaan Bantuan", "2. Proses Permintaan Bantuan Berikutnya", "3. Tampilkan Semua Permintaan Bantuan", "4. Kembali ke Menu Utama"}, "--- MANAJEMEN PERMINTAAN BANTUAN ---", true, desa->getJumlahPermintaanBantuan()); break; // Menu baru
+                    default: currentMenu = MENU_UTAMA; selectedItem = 0; break;
+                }
+            }
+            key = _getch();
+            if (key == 224 || key == 0) {
+                key = _getch();
+                if(adminSudahLogin){
+                    switch (key) {
+                        case 72: // Panah atas
+                            if (currentMenu == MENU_UTAMA) selectedItem = (selectedItem > 0) ? (selectedItem - 1) : 3;
+                            else if (currentMenu == MENU_PENDUDUK) selectedItem = (selectedItem > 0) ? (selectedItem - 1) : 6;
+                            else if (currentMenu == MENU_FASILITAS) selectedItem = (selectedItem > 0) ? (selectedItem - 1) : 4;
+                            else if (currentMenu == MENU_BANTUAN) selectedItem = (selectedItem > 0) ? (selectedItem - 1) : 3;
+                            break;
+                        case 80: // Panah bawah
+                            if (currentMenu == MENU_UTAMA) selectedItem = (selectedItem < 3) ? (selectedItem + 1) : 0;
+                            else if (currentMenu == MENU_PENDUDUK) selectedItem = (selectedItem < 6) ? (selectedItem + 1) : 0;
+                            else if (currentMenu == MENU_FASILITAS) selectedItem = (selectedItem < 4) ? (selectedItem + 1) : 0;
+                            else if (currentMenu == MENU_BANTUAN) selectedItem = (selectedItem < 3) ? (selectedItem + 1) : 0;
+                            break;
+                        case 75: // Panah kiri
+                            if (currentMenu == MENU_PENDUDUK  currentMenu == MENU_FASILITAS  currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
+                            break;
+                        case 77: // Panah kanan
+                            if (currentMenu == MENU_UTAMA) {
+                                if (selectedItem == 0) { currentMenu = MENU_PENDUDUK; selectedItem = 0;}
+                                else if (selectedItem == 1) { currentMenu = MENU_FASILITAS; selectedItem = 0;}
+                                else if (selectedItem == 2) { currentMenu = MENU_BANTUAN; selectedItem = 0;} // Pindah ke menu bantuan
+                            }
+                            break;
+                    }
+                }
+            } else if (key == 13) { if (adminSudahLogin) handleSelection(); } // Enter
+            else if (key == 27) { // ESC
+                if (adminSudahLogin) {
+                    if (currentMenu == MENU_PENDUDUK  currentMenu == MENU_FASILITAS  currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
+                    else if (currentMenu == MENU_UTAMA) {
+                        clearScreen(); drawOuterFrame(); clearContentArea(); drawHeader(); setColor(GREEN);
+                        string msg = "Terima kasih telah menggunakan program ini!"; Mgotoxy((m_contentDisplayWidth - msg.length()) / 2, m_contentDisplayHeight / 2 -1); cout << msg;
+                        setColor(WHITE); gotoxy(0, m_frameY_offset + m_contentDisplayHeight + 2); exit(0);
+                    }
+                }
+            }
+        }
     }
     void handleSelection() {
         if (!adminSudahLogin || currentMenu == MENU_LOGIN) return;
