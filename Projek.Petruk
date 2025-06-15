@@ -1,1 +1,246 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cstring>
+#include <limits>
+#include <windows.h>
+#include <conio.h>
+#include <queue>
+#include <fstream> 
+#include <chrono>   
+#include <ctime>    
 
+using namespace std;
+
+// --- FUNGSI LOGGING MILIK ANDA (TANPA MODIFIKASI) ---
+void tulisLog(const string& pesan) {
+   }const string ADMIN_USERNAME = "admin";
+const string ADMIN_PASSWORD = "admin123";
+
+const int WHITE = 15, YELLOW = 14, GREEN = 10, RED = 12, CYAN = 11;
+
+void gotoxy(int x, int y) { COORD coord = { (short)x, (short)y }; SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord); }
+void setColor(int color) { SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color); }
+void clearScreen() { system("cls"); }
+void clearCinBuffer() { if (cin.peek() == '\n') cin.ignore(numeric_limits<streamsize>::max(), '\n'); }
+
+
+    // localtime mengembalikan pointer, jadi kita tampung di pointer
+    tm* timeinfo = localtime(&current_time);
+
+    // Pastikan timeinfo tidak null sebelum digunakan
+    if (timeinfo != nullptr && strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d %H:%M:%S", timeinfo)) {
+        ofstream log_file(namaFileLog, ios::app);
+        if (log_file.is_open()) {
+            log_file << "[" << timestamp_str << "] " << pesan << endl;
+            log_file.close();
+        } else {
+            cerr << "Error: Gagal membuka file log: " << namaFileLog << endl;
+        }
+    }
+}
+
+
+// --- GLOBAL CONSTANTS AND UTILITIES ---
+const string ADMIN_USERNAME = "admin";
+const string ADMIN_PASSWORD = "admin123";
+
+const int WHITE = 15, YELLOW = 14, GREEN = 10, RED = 12, CYAN = 11;
+
+void gotoxy(int x, int y) { COORD coord = { (short)x, (short)y }; SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord); }
+void setColor(int color) { SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color); }
+void clearScreen() { system("cls"); }
+void clearCinBuffer() { if (cin.peek() == '\n') cin.ignore(numeric_limits<streamsize>::max(), '\n'); }
+
+// --- STRUCTS ---
+struct Penduduk { string NIK, nama, alamat, tanggalLahir, statusPerkawinan, pekerjaan; char jenisKelamin; };
+struct FasilitasDesa { string namaFasilitas, lokasi, jenis; int kapasitas; };
+
+// Struktur baru untuk Permintaan Bantuan
+struct PermintaanBantuan {
+    string idPermintaan;
+    string NIKPemohon;
+    string deskripsi;
+    string status; // Contoh: "Pending", "Diproses", "Selesai"
+};
+
+// --- CLASS Desa ---
+class Desa {
+private:
+    vector<Penduduk> daftarPenduduk;
+    vector<FasilitasDesa> daftarFasilitas;
+    queue<PermintaanBantuan> antreanPermintaanBantuan; // Antrean baru
+
+    // Private helpers for merge sort (Penduduk by NIK)
+    void mergeSortPenduduk(int low, int high) {
+        if (low < high) {
+            int mid = low + (high - low) / 2;
+            mergeSortPenduduk(low, mid); mergeSortPenduduk(mid + 1, high);
+            mergePenduduk(low, mid, high);
+        }
+    }
+    void mergePenduduk(int low, int mid, int high) {
+        vector<Penduduk> temp(high - low + 1); int i = low, j = mid + 1, k = 0;
+        while (i <= mid && j <= high) temp[k++] = (daftarPenduduk[i].NIK <= daftarPenduduk[j].NIK) ? daftarPenduduk[i++] : daftarPenduduk[j++];
+        while (i <= mid) temp[k++] = daftarPenduduk[i++];
+        while (j <= high) temp[k++] = daftarPenduduk[j++];
+        for (int idx = 0; idx < k; idx++) daftarPenduduk[low + idx] = temp[idx];
+    }
+    Penduduk* binarySearchPendudukByNIKInternal(const string& targetNIK, int low, int high) {
+        if (low > high) return nullptr;
+        int mid = low + (high - low) / 2;
+        if (daftarPenduduk[mid].NIK == targetNIK) return &daftarPenduduk[mid];
+        return (daftarPenduduk[mid].NIK > targetNIK) ? binarySearchPendudukByNIKInternal(targetNIK, low, mid - 1) : binarySearchPendudukByNIKInternal(targetNIK, mid + 1, high);
+    }
+
+    // Private helper for drawing shared header/frame
+    void drawContentHeader(int frameX, int frameY, int contentW, int contentH, const string& title, int& currentY) {
+        for(int y_clear = 0; y_clear < contentH; ++y_clear) { gotoxy(frameX, frameY + y_clear); cout << string(contentW, ' '); }
+        currentY = 0;
+        gotoxy(frameX, frameY + currentY); cout << "+" << string(contentW - 2, '-') << "+";
+        gotoxy(frameX, frameY + currentY + 1); cout << "|"; gotoxy(frameX + contentW - 1, frameY + currentY + 1); cout << "|";
+        string mainTitle = "SISTEM MANAJEMEN DATA DESA"; gotoxy(frameX + (contentW - mainTitle.length()) / 2, frameY + currentY + 1); cout << mainTitle;
+        gotoxy(frameX, frameY + currentY + 2); cout << "+" << string(contentW - 2, '-') << "+"; currentY +=3;
+
+        setColor(GREEN); gotoxy(frameX + (contentW - title.length())/2, frameY + currentY++); cout << title; currentY++; setColor(WHITE);
+    }
+    void MgotoxyInFrame(int frameX, int frameY, int innerX, int innerY) { gotoxy(frameX + innerX, frameY + innerY); }
+
+public:
+    void tambahPenduduk(const Penduduk& p) {
+        
+  
+    }
+
+    void tampilkanSemuaPenduduk(int frameX, int frameY, int contentWidth, int contentHeight) {
+        
+    }
+    void urutkanPendudukByNama() {  }
+    void urutkanPendudukByNIKDNC() {  }
+
+    void tambahFasilitas(const FasilitasDesa& f) {
+        
+    }
+    FasilitasDesa* cariFasilitasByName(const string& nama) {  }
+    FasilitasDesa* findFasilitasByNameForDisplay(const string& nama) {  }
+
+    void tampilkanSemuaFasilitas(int frameX, int frameY, int contentW, int contentH) {
+        
+    }
+
+    void inputPendudukBaru(int frameX, int frameY, int contentW, int contentH) {
+        
+    }
+
+    void inputFasilitasBaru(int frameX, int frameY, int contentW, int contentH) {
+        
+    }
+
+    void prosesHapusPenduduk(int frameX, int frameY, int contentW, int contentH) {
+       
+    }
+
+    void prosesCariPenduduk(int frameX, int frameY, int contentW, int contentH) {
+        
+    }
+
+    void prosesHapusFasilitas(int frameX, int frameY, int contentW, int contentH) {
+       
+    }
+
+    void prosesCariFasilitas(int frameX, int frameY, int contentW, int contentH) {
+        
+    }
+
+    // Fungsi-fungsi untuk mengelola antrean permintaan bantuan
+    void tambahPermintaanBantuan(int frameX, int frameY, int contentW, int contentH) {
+      
+    }
+
+    void prosesPermintaanBantuanBerikutnya(int frameX, int frameY, int contentW, int contentH) {
+     
+       
+    }
+
+    void tampilkanSemuaPermintaanBantuan(int frameX, int frameY, int contentW, int contentH) {
+    
+        
+};
+
+// --- CLASS MenuSystem ---
+const int MENU_LOGIN = -1, MENU_UTAMA = 0, MENU_PENDUDUK = 1, MENU_FASILITAS = 2, MENU_BANTUAN = 3; // Tambah menu bantuan
+
+class MenuSystem {
+private:
+    
+    }
+    void drawHeader() {
+       
+    }
+
+    void drawMenuLogin(const string& pesanError = "") {
+       
+    }
+
+    bool prosesLayarLogin() {
+      
+    }
+
+    void drawMenu(const vector<string>& menuItems, const string& menuTitle, bool showCount = false, size_t count = 0) {
+        
+    }
+    void waitForKey() {  }
+
+public:
+    MenuSystem(Desa* d) : desa(d), currentMenu(MENU_LOGIN), selectedItem(0), adminSudahLogin(false), percobaanLogin(0), m_frameX_offset(0), m_frameY_offset(0), m_contentDisplayWidth(78), m_contentDisplayHeight(23) {}
+    void run() {
+        
+    }
+    void handleSelection() {
+        if (!adminSudahLogin || currentMenu == MENU_LOGIN) return;
+        int startDrawX = m_frameX_offset + 1, startDrawY_content = m_frameY_offset + 1, currentContentHeight = m_contentDisplayHeight;
+        switch (currentMenu) {
+            case MENU_UTAMA:
+                switch (selectedItem) {
+                    case 0: currentMenu = MENU_PENDUDUK; selectedItem = 0; break;
+                    case 1: currentMenu = MENU_FASILITAS; selectedItem = 0; break;
+                    case 2: currentMenu = MENU_BANTUAN; selectedItem = 0; break; // Masuk ke menu bantuan
+                    case 3: { clearScreen(); drawOuterFrame(); clearContentArea(); drawHeader(); setColor(GREEN); string msg = "Terima kasih telah menggunakan program ini!"; Mgotoxy((m_contentDisplayWidth - msg.length())/2, m_contentDisplayHeight/2 -1); cout << msg; setColor(WHITE); gotoxy(0, m_frameY_offset + m_contentDisplayHeight + 2); exit(0); } break;
+                } break;
+            case MENU_PENDUDUK:
+                switch (selectedItem) {
+                    case 0: desa->inputPendudukBaru(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 1: desa->tampilkanSemuaPenduduk(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 2: desa->prosesCariPenduduk(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 3: desa->prosesHapusPenduduk(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 4: clearContentArea(); drawHeader(); desa->urutkanPendudukByNama(); setColor(GREEN); Mgotoxy(2, 4); cout << "Data penduduk diurutkan berdasarkan nama!"; setColor(WHITE); waitForKey(); break;
+                    case 5: clearContentArea(); drawHeader(); desa->urutkanPendudukByNIKDNC(); setColor(GREEN); Mgotoxy(2, 4); cout << "Data penduduk diurutkan berdasarkan NIK!"; setColor(WHITE); waitForKey(); break;
+                    case 6: currentMenu = MENU_UTAMA; selectedItem = 0; break;
+                } break;
+            case MENU_FASILITAS:
+                switch (selectedItem) {
+                    case 0: desa->inputFasilitasBaru(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 1: desa->tampilkanSemuaFasilitas(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 2: desa->prosesCariFasilitas(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 3: desa->prosesHapusFasilitas(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 4: currentMenu = MENU_UTAMA; selectedItem = 0; break;
+                } break;
+            case MENU_BANTUAN: // Case baru untuk manajemen permintaan bantuan
+                switch (selectedItem) {
+                    case 0: desa->tambahPermintaanBantuan(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 1: desa->prosesPermintaanBantuanBerikutnya(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 2: desa->tampilkanSemuaPermintaanBantuan(startDrawX, startDrawY_content, m_contentDisplayWidth, currentContentHeight); waitForKey(); break;
+                    case 3: currentMenu = MENU_UTAMA; selectedItem = 0; break;
+                } break;
+        }
+    }
+};
+
+// --- MAIN FUNCTION ---
+int main() {
+     Desa desaKita;
+     MenuSystem menu(&desaKita);
+     menu.run();
+     return 0;
+}
