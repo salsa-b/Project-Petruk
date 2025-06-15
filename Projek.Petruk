@@ -457,7 +457,7 @@ public:
                             else if (currentMenu == MENU_BANTUAN) selectedItem = (selectedItem < 3) ? (selectedItem + 1) : 0;
                             break;
                         case 75: // Panah kiri
-                            if (currentMenu == MENU_PENDUDUK  currentMenu == MENU_FASILITAS  currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
+                            if (currentMenu == MENU_PENDUDUK  || currentMenu == MENU_FASILITAS || currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
                             break;
                         case 77: // Panah kanan
                             if (currentMenu == MENU_UTAMA) {
@@ -471,7 +471,7 @@ public:
             } else if (key == 13) { if (adminSudahLogin) handleSelection(); } // Enter
             else if (key == 27) { // ESC
                 if (adminSudahLogin) {
-                    if (currentMenu == MENU_PENDUDUK  currentMenu == MENU_FASILITAS  currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
+                    if (currentMenu == MENU_PENDUDUK || currentMenu == MENU_FASILITAS || currentMenu == MENU_BANTUAN) { currentMenu = MENU_UTAMA; selectedItem = 0; }
                     else if (currentMenu == MENU_UTAMA) {
                         clearScreen(); drawOuterFrame(); clearContentArea(); drawHeader(); setColor(GREEN);
                         string msg = "Terima kasih telah menggunakan program ini!"; Mgotoxy((m_contentDisplayWidth - msg.length()) / 2, m_contentDisplayHeight / 2 -1); cout << msg;
