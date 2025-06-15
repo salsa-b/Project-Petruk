@@ -219,30 +219,115 @@ public:
 
 
     void prosesCariPenduduk(int frameX, int frameY, int contentW, int contentH) {
-        
+        string NIK_cari; int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "CARI PENDUDUK", currentY);
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "Masukkan NIK penduduk yang ingin dicari: "; clearCinBuffer(); getline(cin, NIK_cari);
+        Penduduk* p = findPendudukByNIKForDisplay(NIK_cari);
+        if (p) {
+            setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Penduduk ditemukan:"; setColor(WHITE);
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 3); cout << "Nama           : " << p->nama;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 4); cout << "Alamat         : " << p->alamat;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 5); cout << "Tanggal Lahir  : " << p->tanggalLahir;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 6); cout << "Jenis Kelamin  : " << p->jenisKelamin;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 7); cout << "Status         : " << p->statusPerkawinan;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 8); cout << "Pekerjaan      : " << p->pekerjaan;
+        } else { setColor(RED); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Penduduk dengan NIK " << NIK_cari << " tidak ditemukan."; setColor(WHITE); }
     }
 
     void prosesHapusFasilitas(int frameX, int frameY, int contentW, int contentH) {
-       
+        string nama_hapus; int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "HAPUS FASILITAS", currentY);
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "Masukkan nama fasilitas yang ingin dihapus: "; clearCinBuffer(); getline(cin, nama_hapus);
+        auto it = remove_if(daftarFasilitas.begin(), daftarFasilitas.end(), [&](const FasilitasDesa& f) { return f.namaFasilitas == nama_hapus; });
+        if (it != daftarFasilitas.end()) {
+            daftarFasilitas.erase(it, daftarFasilitas.end());
+            setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Fasilitas " << nama_hapus << " berhasil dihapus."; setColor(WHITE);
+            tulisLog("FASILITAS DIHAPUS: Nama=" + nama_hapus);
+        } else {
+            setColor(RED); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Fasilitas " << nama_hapus << " tidak ditemukan."; setColor(WHITE);
+            tulisLog("GAGAL HAPUS FASILITAS: Nama " + nama_hapus + " tidak ditemukan.");
+        }
     }
 
     void prosesCariFasilitas(int frameX, int frameY, int contentW, int contentH) {
-        
+        string nama_cari; int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "CARI FASILITAS", currentY);
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "Masukkan nama fasilitas yang ingin dicari: "; clearCinBuffer(); getline(cin, nama_cari);
+        FasilitasDesa* f = findFasilitasByNameForDisplay(nama_cari);
+        if (f) {
+            setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Fasilitas ditemukan:"; setColor(WHITE);
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 3); cout << "Nama Fasilitas : " << f->namaFasilitas;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 4); cout << "Lokasi         : " << f->lokasi;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 5); cout << "Jenis          : " << f->jenis;
+            MgotoxyInFrame(frameX, frameY, 4, currentY + 6); cout << "Kapasitas      : " << f->kapasitas << " orang";
+        } else { setColor(RED); MgotoxyInFrame(frameX, frameY, 2, currentY + 2); cout << "Fasilitas " << nama_cari << " tidak ditemukan."; setColor(WHITE); }
     }
 
     // Fungsi-fungsi untuk mengelola antrean permintaan bantuan
     void tambahPermintaanBantuan(int frameX, int frameY, int contentW, int contentH) {
-      
+        PermintaanBantuan pb; int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "TAMBAH PERMINTAAN BANTUAN", currentY);
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "ID Permintaan: "; clearCinBuffer(); getline(cin, pb.idPermintaan); currentY++;
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "NIK Pemohon: "; getline(cin, pb.NIKPemohon); currentY++;
+        MgotoxyInFrame(frameX, frameY, 2, currentY); cout << "Deskripsi Permintaan: "; getline(cin, pb.deskripsi); currentY++;
+        pb.status = "Pending"; // Set status awal
+        antreanPermintaanBantuan.push(pb);
+        setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY + 1); cout << "Permintaan bantuan berhasil ditambahkan ke antrean!"; setColor(WHITE);
+        tulisLog("PERMINTAAN DITAMBAHKAN: ID=" + pb.idPermintaan + ", NIK=" + pb.NIKPemohon);
     }
 
     void prosesPermintaanBantuanBerikutnya(int frameX, int frameY, int contentW, int contentH) {
-     
-       
+        int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "PROSES PERMINTAAN BANTUAN", currentY);
+        if (antreanPermintaanBantuan.empty()) {
+            setColor(RED); MgotoxyInFrame(frameX, frameY, (contentW - 35)/2, currentY++); cout << "Tidak ada permintaan bantuan dalam antrean."; setColor(WHITE);
+            tulisLog("PROSES PERMINTAAN GAGAL: Antrean kosong.");
+            return;
+        }
+
+        PermintaanBantuan pb = antreanPermintaanBantuan.front(); // Ambil elemen pertama tanpa menghapus
+        setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << "Memproses permintaan berikut:"; setColor(WHITE);
+        MgotoxyInFrame(frameX, frameY, 4, currentY++); cout << "ID Permintaan  : " << pb.idPermintaan;
+        MgotoxyInFrame(frameX, frameY, 4, currentY++); cout << "NIK Pemohon    : " << pb.NIKPemohon;
+        MgotoxyInFrame(frameX, frameY, 4, currentY++); cout << "Deskripsi      : " << pb.deskripsi;
+        MgotoxyInFrame(frameX, frameY, 4, currentY++); cout << "Status         : " << pb.status;
+
+        antreanPermintaanBantuan.pop(); // Hapus elemen yang sudah diproses
+        setColor(GREEN); MgotoxyInFrame(frameX, frameY, 2, currentY + 1); cout << "Permintaan berhasil diproses dan dihapus dari antrean."; setColor(WHITE);
+        tulisLog("PERMINTAAN DIPROSES: ID=" + pb.idPermintaan);
     }
 
     void tampilkanSemuaPermintaanBantuan(int frameX, int frameY, int contentW, int contentH) {
-    
-        
+        int currentY; drawContentHeader(frameX, frameY, contentW, contentH, "ANTREAN PERMINTAAN BANTUAN", currentY);
+        if (antreanPermintaanBantuan.empty()) {
+            setColor(RED); MgotoxyInFrame(frameX, frameY, (contentW - 35)/2, currentY++); cout << "Tidak ada permintaan bantuan dalam antrean."; setColor(WHITE);
+            return;
+        }
+
+        queue<PermintaanBantuan> tempQueue = antreanPermintaanBantuan; // Salin antrean untuk ditampilkan
+        size_t items_per_page_pb = 0; int available_height_for_items_pb = contentH - currentY - 1;
+        if (available_height_for_items_pb >= 5) items_per_page_pb = available_height_for_items_pb / 5;
+        else { MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << "Area tampilan terlalu kecil."; return; }
+
+        int i = 0;
+        while (!tempQueue.empty()) {
+            const PermintaanBantuan& pb = tempQueue.front();
+            if (i > 0 && i % items_per_page_pb == 0) {
+                         MgotoxyInFrame(frameX, frameY, 2, contentH-1); cout << "-- Tekan tombol untuk data selanjutnya --" << string(contentW - 40, ' '); _getch();
+                         currentY = 3; for(int k=currentY; k < contentH-1; ++k) { MgotoxyInFrame(frameX, frameY, 0, k); cout << string(contentW, ' ');}
+                         setColor(GREEN); MgotoxyInFrame(frameX, frameY, (contentW - string("ANTREAN PERMINTAAN BANTUAN").length())/2, currentY++); cout << "ANTREAN PERMINTAAN BANTUAN"; currentY++; setColor(WHITE);
+            }
+            if (currentY + 4 > contentH-1) { if (!tempQueue.empty() && items_per_page_pb > 0) MgotoxyInFrame(frameX, frameY, 2, contentH-1); cout << "-- Sisa data di halaman berikutnya --" << string(contentW - 37, ' '); break; }
+
+            setColor(YELLOW); MgotoxyInFrame(frameX, frameY, 0, currentY++); cout << "[" << (i + 1) << "] ID: " << pb.idPermintaan; setColor(WHITE);
+            MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << "NIK Pemohon    : " << pb.NIKPemohon;
+            MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << "Deskripsi      : " << pb.deskripsi;
+            MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << "Status         : " << pb.status;
+            setColor(CYAN); MgotoxyInFrame(frameX, frameY, 2, currentY++); cout << string(contentW - 4, '-'); setColor(WHITE);
+            tempQueue.pop();
+            i++;
+        }
+    }
+
+
+    size_t getJumlahPenduduk() const { return daftarPenduduk.size(); }
+    size_t getJumlahFasilitas() const { return daftarFasilitas.size(); }
+    size_t getJumlahPermintaanBantuan() const { return antreanPermintaanBantuan.size(); }
 };
 
 // --- CLASS MenuSystem ---
